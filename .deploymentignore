@@ -1,0 +1,8 @@
+.env.development
+test.js
+media/audio_samples/
+node_modules/
+.git/
+.gitignore
+.env.development
+.env

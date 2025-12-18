@@ -1,0 +1,188 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url = "mysql://genguilo_portfolio_apps_user:Fh{R&ygfO^(c@127.0.0.1:3306/genguilo_portfolio_apps_db"
+}
+
+enum Role {
+  ADMIN
+  BILLER
+  CODER
+}
+
+enum ClaimStatus {
+  DRAFT
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  DENIED
+}
+
+enum EncounterStatus {
+  OPEN
+  READY
+  CLAIMED
+}
+
+enum DenialStatus {
+  OPEN
+  CLOSED
+}
+
+model Tenant {
+  id            Int       @id @default(autoincrement())
+  name          String
+  practiceName  String?
+  npi           String?
+  taxId         String?
+  address       String?
+  createdAt     DateTime  @default(now())
+  users         User[]
+  patients      Patient[]
+  encounters    Encounter[]
+  charges       Charge[]
+  claims        Claim[]
+  denials       Denial[]
+  auditLogs     AuditLog[]
+  insurances    Insurance[]
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  tenant_id    Int
+  email        String   @unique
+  password_hash String
+  role         Role
+  name         String?
+  createdAt    DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenant_id], references: [id])
+
+  @@index([tenant_id])
+}
+
+model Patient {
+  id         Int       @id @default(autoincrement())
+  tenant_id  Int
+  first_name String
+  last_name  String
+  dob        DateTime?
+  gender     String?
+  createdAt  DateTime  @default(now())
+
+  tenant     Tenant     @relation(fields: [tenant_id], references: [id])
+  insurances Insurance[]
+  encounters Encounter[]
+  claims     Claim[]
+
+  @@index([tenant_id])
+}
+
+model Insurance {
+  id            Int      @id @default(autoincrement())
+  tenant_id     Int
+  patient_id    Int
+  payer_name    String
+  member_id     String
+  subscriber_name String?
+  subscriber_dob DateTime?
+  card_url      String?
+
+  tenant  Tenant  @relation(fields: [tenant_id], references: [id])
+  patient Patient @relation(fields: [patient_id], references: [id])
+
+  @@index([tenant_id])
+  @@index([patient_id])
+}
+
+model Encounter {
+  id               Int       @id @default(autoincrement())
+  tenant_id        Int
+  patient_id       Int
+  date_of_service  DateTime?
+  provider_npi     String?
+  place_of_service String?
+  notes            String?
+  status           EncounterStatus @default(OPEN)
+
+  tenant   Tenant   @relation(fields: [tenant_id], references: [id])
+  patient  Patient  @relation(fields: [patient_id], references: [id])
+  charges  Charge[]
+  claim    Claim?   @relation("EncounterClaim")
+
+  @@index([tenant_id])
+  @@index([patient_id])
+}
+
+model Charge {
+  id            Int      @id @default(autoincrement())
+  tenant_id     Int
+  encounter_id  Int
+  cpt           String
+  icd10         String
+  modifier      String?
+  units         Int      @default(1)
+  charge_amount Decimal  @default(0)
+
+  tenant    Tenant    @relation(fields: [tenant_id], references: [id])
+  encounter Encounter @relation(fields: [encounter_id], references: [id])
+
+  @@index([tenant_id])
+  @@index([encounter_id])
+}
+
+model Claim {
+  id           Int         @id @default(autoincrement())
+  tenant_id    Int
+  patient_id   Int
+  encounter_id Int
+  status       ClaimStatus @default(DRAFT)
+  claim_json   Json
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt @default(now())
+  submittedAt  DateTime?
+
+  tenant    Tenant    @relation(fields: [tenant_id], references: [id])
+  patient   Patient   @relation(fields: [patient_id], references: [id])
+  encounter Encounter @relation("EncounterClaim", fields: [encounter_id], references: [id])
+  denials   Denial[]
+
+  @@index([tenant_id])
+  @@index([patient_id])
+  @@unique([encounter_id])
+}
+
+model Denial {
+  id        Int          @id @default(autoincrement())
+  tenant_id Int
+  claim_id  Int
+  reason    String
+  status    DenialStatus @default(OPEN)
+  createdAt DateTime     @default(now())
+
+  tenant Tenant @relation(fields: [tenant_id], references: [id])
+  claim  Claim  @relation(fields: [claim_id], references: [id])
+
+  @@index([tenant_id])
+  @@index([claim_id])
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  tenant_id Int
+  user_id   Int?
+  entity    String
+  entity_id Int?
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenant_id], references: [id])
+
+  @@index([tenant_id])
+  @@index([user_id])
+}

@@ -1,0 +1,34 @@
+{
+  "name": "rcm",
+  "version": "0.1.0",
+  "private": true,
+  "prisma": {
+    "schema": "/home/genguilo/public_html/gengini_apps/rcm-studio/prisma/schema.prisma"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "postinstall": "prisma generate --schema=/home/genguilo/public_html/gengini_apps/rcm-studio/prisma/schema.prisma && prisma db push --schema=/home/genguilo/public_html/gengini_apps/rcm-studio/prisma/schema.prisma",
+    "build": "next build",
+    "start": "NODE_ENV=production node app.js",
+    "lint": "eslint",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev"
+  },
+  "dependencies": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "next": "15.5.9",
+    "@prisma/client": "^5.22.0",
+    "openai": "^4.83.0",
+    "serve-static": "^1.15.0",
+    "finalhandler": "^1.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "tailwindcss": "^4",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.9",
+    "@eslint/eslintrc": "^3",
+    "prisma": "^5.22.0"
+  }
+}
